@@ -43,15 +43,15 @@ public class AdminController : ControllerBase
         try
         {
             var user = await _unitOfWork.AppUsers.SuspendByUsername(username);
-            if (user == null)
+            return user switch
             {
-                throw new UserNotFoundException(
+                null => throw new UserNotFoundException(
                     username
-                    );
-            }
-            return Ok(
+                    ),
+                _ => Ok(
                 _mapper.Map<AppUserAdminResponse>(user)
-                );
+                )
+            };
         }
         catch (Exception ex)
         {
@@ -75,15 +75,15 @@ public class AdminController : ControllerBase
         try
         {
             var user = await _unitOfWork.AppUsers.UnSuspendByUsername(username);
-            if (user == null)
+            return user switch
             {
-                throw new UserNotFoundException(
+                null => throw new UserNotFoundException(
                     username
-                    );
-            }
-            return Ok(
+                    ),
+                _ => Ok(
                 _mapper.Map<List<AppUser>>(user)
-                );
+                )
+            };
         }
         catch (Exception ex)
         {

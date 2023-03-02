@@ -67,7 +67,6 @@ public class PostsController : ControllerBase
             ModelState.AddModelError("GetPagePost", ex.Message);
             return BadRequest(ModelState);
         }
-
     }
 
     /// <summary>
@@ -432,6 +431,4 @@ public class PostsController : ControllerBase
         }
         return BadRequest(ModelState);
     }
-
-
 }

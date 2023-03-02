@@ -272,11 +272,8 @@ public class BlogsController : ControllerBase
         try
         {
             var blog = await _unitOfWork.BlogRepository
-                .GetOneAsync(b => b.Id == id, default!, default!);
-            if (blog == null)
-            {
-                throw new BlogNotFoundException(id);
-            }
+                .GetOneAsync(b => b.Id == id, default!, default!) ?? throw new BlogNotFoundException(id);
+
             var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
 
             if (blog.UserId == userId)
@@ -316,11 +313,8 @@ public class BlogsController : ControllerBase
                 .GetOneAsync(b => b.Id == id,
                     includeProperties: null,
                     tracked: true
-                );
-            if (blog == null)
-            {
-                throw new BlogNotFoundException(id);
-            }
+                ) ?? throw new BlogNotFoundException(id);
+
             var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
             await _unitOfWork.BlogRepository.RemoveFollowerAsync(blog.Id, userId);
             await _unitOfWork.SaveAsync();

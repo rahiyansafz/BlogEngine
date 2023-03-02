@@ -80,10 +80,7 @@ public class UserController : ControllerBase
     {
         try
         {
-            if (username == null)
-            {
-                username = User.Claims.Where(x => x.Type == "username").FirstOrDefault()?.Value;
-            }
+            username ??= User.Claims.Where(x => x.Type == "username").FirstOrDefault()?.Value;
             AppUser user = await _unitOfWork.AppUsers
                 .GetOneAsync(u => u.UserName == username);
             if (user == null)
@@ -207,7 +204,6 @@ public class UserController : ControllerBase
         }
         return BadRequest(ModelState);
     }
-
 
     private static Regex sUserNameAllowedRegEx = new Regex(
             @"^[a-zA-Z]{1}[a-zA-Z0-9\._\-]{0,23}[^.-]$",
