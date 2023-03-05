@@ -23,11 +23,13 @@ public class PostsController : ControllerBase
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly ILogger _logger;
 
-    public PostsController(IUnitOfWork unitOfWork, IMapper mapper)
+    public PostsController(IUnitOfWork unitOfWork, IMapper mapper, ILogger logger)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _logger = logger;
     }
 
     /// <summary>
@@ -64,8 +66,12 @@ public class PostsController : ControllerBase
         }
         catch (Exception ex)
         {
-            ModelState.AddModelError("GetPagePost", ex.Message);
-            return BadRequest(ModelState);
+            _logger.LogError(
+                "{Error} Executing {Action} with parameters {Parameters}.",
+                    ex.Message, nameof(Get), postParameters
+                );
+
+            return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
 
@@ -85,17 +91,22 @@ public class PostsController : ControllerBase
         {
             var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
             var post = await _unitOfWork.PostRepository.GetOneAsync(postId, userId);
-            if (post == null)
-                return NotFound($"Post with id {postId} not found.");
-
-            return Ok(
+            return post switch
+            {
+                null => NotFound($"Post with id {postId} not found."),
+                _ => Ok(
                     _mapper.Map<PostResponse>(post)
-                );
+                )
+            };
         }
         catch (Exception ex)
         {
-            ModelState.AddModelError("GetPostById", ex.Message);
-            return BadRequest(ModelState);
+            _logger.LogError(
+                "{Error} Executing {Action} with parameters {Parameters}.",
+                    ex.Message, nameof(Get), postId
+                );
+
+            return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
 
@@ -114,18 +125,15 @@ public class PostsController : ControllerBase
     {
         try
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
             var blog = await _unitOfWork.BlogRepository
-                .GetOneAsync(b => b.Id == postModel.BlogId, tracked: true);
+                .GetOneAsync(b => b.Id == postModel.BlogId, tracked: true) ?? throw new BlogNotFoundException(postModel.BlogId);
 
-            if (blog == null)
-            {
-                throw new BlogNotFoundException(postModel.BlogId);
-            }
             if (blog.UserId != userId)
-            {
                 return Unauthorized();
-            }
 
             var post = _mapper.Map<Post>(postModel);
             post.UserId = userId;
@@ -136,14 +144,16 @@ public class PostsController : ControllerBase
                 $"~api/blogs/{blog.Id}/posts",
                 postModel
                 );
-
         }
         catch (Exception ex)
         {
-            ModelState.AddModelError("AddPost", ex.Message);
-        }
+            _logger.LogError(
+                "{Error} Executing {Action} with parameters {Parameters}.",
+                    ex.Message, nameof(Post), postModel
+                );
 
-        return BadRequest(ModelState);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -156,38 +166,39 @@ public class PostsController : ControllerBase
     [Consumes(MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Put(int postId, [FromBody] PostRequest postModel)
     {
         try
         {
-            if (ModelState.IsValid)
-            {
-                var post = await _unitOfWork.PostRepository
-                    .GetOneAsync(p => p.Id == postId, default!, default!);
-                if (post == null)
-                {
-                    return BadRequest("Post doen't exist in database");
-                }
-                var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
-                if (post.UserId != userId)
-                {
-                    return Unauthorized();
-                }
-                post.HeadLine = postModel.HeadLine;
-                post.Content = postModel.Content;
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-                await _unitOfWork.PostRepository.UpdateAsync(post);
-                await _unitOfWork.SaveAsync();
+            var post = await _unitOfWork.PostRepository
+                .GetOneAsync(p => p.Id == postId, default!, default!);
+            if (post is null)
+                return BadRequest("Post doen't exist in database");
 
-                return NoContent();
-            }
+            var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
+            if (post.UserId != userId)
+                return Unauthorized();
+            post.HeadLine = postModel.HeadLine;
+            post.Content = postModel.Content;
+
+            await _unitOfWork.PostRepository.UpdateAsync(post);
+            await _unitOfWork.SaveAsync();
+
+            return NoContent();
         }
         catch (Exception ex)
         {
-            ModelState.AddModelError("UpdatePost", ex.Message);
-        }
+            _logger.LogError(
+                "{Error} Executing {Action} with parameters {Parameters}.",
+                    ex.Message, nameof(Put), postModel
+                );
 
-        return BadRequest(ModelState);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -198,35 +209,31 @@ public class PostsController : ControllerBase
     [HttpDelete("/api/posts/{postId}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Delete(int postId)
     {
         try
         {
-            if (ModelState.IsValid)
-            {
-                var post = await _unitOfWork.PostRepository
-                    .GetOneAsync(p => p.Id == postId, default!, default!);
-                if (post == null)
-                {
-                    return BadRequest(ModelState);
-                }
-                var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
-                if (post.UserId != userId)
-                {
-                    return Unauthorized();
-                }
-                await _unitOfWork.PostRepository.RemoveAsync(post);
-                await _unitOfWork.SaveAsync();
+            var post = await _unitOfWork.PostRepository
+                .GetOneAsync(p => p.Id == postId, default!, default!);
+            if (post is null)
+                return BadRequest(ModelState);
+            var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
+            if (post.UserId != userId)
+                return Unauthorized();
+            await _unitOfWork.PostRepository.RemoveAsync(post);
+            await _unitOfWork.SaveAsync();
 
-                return NoContent();
-            }
+            return NoContent();
         }
         catch (Exception ex)
         {
-            ModelState.AddModelError("DeletePost", ex.Message);
+            _logger.LogError(
+                "{Error} Executing {Action} with parameters {Parameters}.",
+                    ex.Message, nameof(Delete), postId
+                );
+            return StatusCode(StatusCodes.Status500InternalServerError);
         }
-
-        return BadRequest(ModelState);
     }
 
     /// <summary>
@@ -236,6 +243,7 @@ public class PostsController : ControllerBase
     /// <returns></returns>
     [HttpPost("/api/posts/{postId}/like")]
     [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> LikePost(int postId)
     {
@@ -243,7 +251,7 @@ public class PostsController : ControllerBase
         {
             var Post = await _unitOfWork.PostRepository
                 .GetOneAsync(c => c.Id == postId, default!, default!);
-            if (Post == null) return BadRequest();
+            if (Post is null) return BadRequest();
             var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
             await _unitOfWork.PostRepository.AddLikeAsync(Post.Id, userId);
             await _unitOfWork.SaveAsync();
@@ -254,9 +262,13 @@ public class PostsController : ControllerBase
         }
         catch (Exception ex)
         {
-            ModelState.AddModelError("LikePost", ex.Message);
+            _logger.LogError(
+                "{Error} Executing {Action} with parameters {Parameters}.",
+                    ex.Message, nameof(LikePost), postId
+                );
+
+            return StatusCode(StatusCodes.Status500InternalServerError);
         }
-        return BadRequest(ModelState);
     }
 
     /// <summary>
@@ -267,13 +279,14 @@ public class PostsController : ControllerBase
     [HttpPost("/api/posts/{postId}/unlike")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> UnLikePost(int postId)
     {
         try
         {
             var Post = await _unitOfWork.PostRepository
                 .GetOneAsync(c => c.Id == postId, default!, default!);
-            if (Post == null) return BadRequest("Post doesn't Exits.");
+            if (Post is null) return BadRequest("Post doesn't Exits.");
             var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
             await _unitOfWork.PostRepository.RemoveLikeAsync(Post.Id, userId);
             await _unitOfWork.SaveAsync();
@@ -284,9 +297,13 @@ public class PostsController : ControllerBase
         }
         catch (Exception ex)
         {
-            ModelState.AddModelError("UnlikePost", ex.Message);
+            _logger.LogError(
+                "{Error} Executing {Action} with parameters {Parameters}.",
+                    ex.Message, nameof(UnLikePost), postId
+                );
+
+            return StatusCode(StatusCodes.Status500InternalServerError);
         }
-        return BadRequest(ModelState);
     }
 
     /// <summary>
@@ -297,11 +314,12 @@ public class PostsController : ControllerBase
     [AllowAnonymous]
     [HttpGet("/api/posts/{postId}/likes")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Likes(int postId)
     {
 
         var Post = await _unitOfWork.PostRepository.GetOneAsync(c => c.Id == postId);
-        if (Post == null) return BadRequest();
+        if (Post is null) return BadRequest();
         var usersLikes = await _unitOfWork.PostRepository.GetLikesAsync(postId);
 
         return Ok(
@@ -338,10 +356,14 @@ public class PostsController : ControllerBase
     [HttpGet("/api/posts/{postId}/add-tag")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> TagPost([FromRoute] int postId, [FromQuery] string tagName)
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> TagPost([FromRoute] int postId, [FromQuery] string? tagName)
     {
         try
         {
+            if (string.IsNullOrEmpty(tagName))
+                return BadRequest("tagname is required in query parameters.");
+
             var post = await _unitOfWork.PostRepository
                 .GetOneAsync(c => c.Id == postId, "PostTags", tracked: true);
             if (Post == null)
@@ -352,7 +374,7 @@ public class PostsController : ControllerBase
                 return Unauthorized();
 
             Tag? tag = await _unitOfWork.PostRepository.GetTagByName(tagName);
-            if (tag == null)
+            if (tag is null)
                 return BadRequest(
                     "Not valid tag name."
                     );
@@ -370,9 +392,13 @@ public class PostsController : ControllerBase
         }
         catch (Exception ex)
         {
-            ModelState.AddModelError("GetPostlikes", ex.Message);
+            _logger.LogError(
+                "{Error} Executing {Action} with parameters {Parameters}.",
+                    ex.Message, nameof(TagPost), postId
+                );
+
+            return StatusCode(StatusCodes.Status500InternalServerError);
         }
-        return BadRequest(ModelState);
     }
 
     /// <summary>
@@ -385,16 +411,13 @@ public class PostsController : ControllerBase
     [Consumes(MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> RemoveTagPost([FromRoute] int postId, [FromQuery] string tagName)
     {
         try
         {
-            if (tagName == null)
-            {
-                return BadRequest(
-                    "You must Specify tagname in request query."
-                    );
-            }
+            if (tagName is null)
+                return BadRequest("You must Specify tagname in request query.");
             var post = await _unitOfWork.PostRepository
                 .GetOneAsync(c => c.Id == postId, "PostTags", tracked: true);
             if (Post == null)
@@ -407,7 +430,7 @@ public class PostsController : ControllerBase
                     );
 
             Tag? tag = await _unitOfWork.PostRepository.GetTagByName(tagName);
-            if (tag == null)
+            if (tag is null)
                 return BadRequest(
                     "Not a valid tag name."
                     );
@@ -427,8 +450,12 @@ public class PostsController : ControllerBase
         }
         catch (Exception ex)
         {
-            ModelState.AddModelError("GetPostlikes", ex.Message);
+            _logger.LogError(
+                "{Error} Executing {Action} with parameters {Parameters}.",
+                    ex.Message, nameof(RemoveTagPost), new { postId, tagName }
+                );
+
+            return StatusCode(StatusCodes.Status500InternalServerError);
         }
-        return BadRequest(ModelState);
     }
 }

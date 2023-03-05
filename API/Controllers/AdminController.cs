@@ -21,11 +21,13 @@ public class AdminController : ControllerBase
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly ILogger<AdminController> _logger;
 
-    public AdminController(IUnitOfWork unitOfWork, IMapper mapper)
+    public AdminController(IUnitOfWork unitOfWork, IMapper mapper, ILogger<AdminController> logger)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _logger = logger;
     }
 
     /// <summary>
@@ -42,21 +44,23 @@ public class AdminController : ControllerBase
     {
         try
         {
-            var user = await _unitOfWork.AppUsers.SuspendByUsername(username);
-            return user switch
-            {
-                null => throw new UserNotFoundException(
+            var user = await _unitOfWork.AppUsers.SuspendByUsername(username) ?? throw new UserNotFoundException(
                     username
-                    ),
-                _ => Ok(
+                    );
+            _logger.LogInformation("User with usrname : {} is now suspended.", username);
+
+            return Ok(
                 _mapper.Map<AppUserAdminResponse>(user)
-                )
-            };
+                );
         }
         catch (Exception ex)
         {
-            ModelState.AddModelError("suspend-user", ex.Message);
-            return BadRequest(ModelState);
+            _logger.LogError(
+                "{Error} Executing {Action} with parameters {Parameters}.",
+                    ex.Message, nameof(SuspendUser), username
+                );
+
+            return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
 
@@ -74,21 +78,23 @@ public class AdminController : ControllerBase
     {
         try
         {
-            var user = await _unitOfWork.AppUsers.UnSuspendByUsername(username);
-            return user switch
-            {
-                null => throw new UserNotFoundException(
+            var user = await _unitOfWork.AppUsers.UnSuspendByUsername(username) ?? throw new UserNotFoundException(
                     username
-                    ),
-                _ => Ok(
+                    );
+            _logger.LogInformation("User with usrname : {} is now unsuspended.", username);
+
+            return Ok(
                 _mapper.Map<List<AppUser>>(user)
-                )
-            };
+                );
         }
         catch (Exception ex)
         {
-            ModelState.AddModelError("unsuspend-user", ex.Message);
-            return BadRequest(ModelState);
+            _logger.LogError(
+                "{Error} Executing {Action} with parameters {Parameters}.",
+                    ex.Message, nameof(UnSuspendUser), username
+                );
+
+            return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
 }

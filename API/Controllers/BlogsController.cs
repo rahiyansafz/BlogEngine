@@ -26,11 +26,13 @@ public class BlogsController : ControllerBase
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly ILogger<BlogsController> _logger;
 
-    public BlogsController(IUnitOfWork unitOfWork, IMapper mapper)
+    public BlogsController(IUnitOfWork unitOfWork, IMapper mapper, ILogger<BlogsController> logger)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _logger = logger;
     }
 
     /// <summary>
@@ -59,7 +61,7 @@ public class BlogsController : ControllerBase
         }
         catch (Exception ex)
         {
-            //ModelState.AddModelError("GetBlogs", ex.Message); // log ex.message
+            _logger.LogError("Getting paged blog result : ", ex.Message);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -78,17 +80,15 @@ public class BlogsController : ControllerBase
         try
         {
             var blog = await _unitOfWork.BlogRepository.GetOneAsync(b => b.Id == id);
-            if (blog == null)
-            {
+            if (blog is null)
                 return NotFound();
-            }
             return Ok(
                 _mapper.Map<BlogResponse>(blog)
                 );
         }
         catch (Exception ex)
         {
-            //ModelState.AddModelError("GetBlog", ex.Message);
+            _logger.LogError("Getting blog by id : ", ex.Message);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -108,7 +108,7 @@ public class BlogsController : ControllerBase
         {
             if (ModelState.IsValid)
             {
-                var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
+                string? userId = User.Claims.FirstOrDefault(x => x.Type == "uid")?.Value;
                 var blog = _mapper.Map<Blog>(blogModel);
                 blog.UserId = userId;
                 await _unitOfWork.BlogRepository.AddAsync(blog);
@@ -119,7 +119,7 @@ public class BlogsController : ControllerBase
         }
         catch (Exception ex)
         {
-            //ModelState.AddModelError("AddBlog", ex.Message);
+            _logger.LogError("Adding a blog to database: ", ex.Message);
         }
         return StatusCode(StatusCodes.Status500InternalServerError);
     }
@@ -142,15 +142,12 @@ public class BlogsController : ControllerBase
             {
                 var blog = await _unitOfWork.BlogRepository
                     .GetOneAsync(b => b.Id == id, default!, default!);
-                if (blog == null)
-                {
+                if (blog is null)
                     return BadRequest(ModelState);
-                }
+
                 var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
                 if (blog.UserId != userId)
-                {
                     return Unauthorized();
-                }
 
                 blog.Description = blogModel.Description;
                 blog.Title = blogModel.Title;
@@ -163,7 +160,8 @@ public class BlogsController : ControllerBase
         }
         catch (Exception ex)
         {
-            //ModelState.AddModelError("UpdateBlog", ex.Message);
+            _logger.LogError("Updating blog from database: ", ex.Message);
+
         }
         return StatusCode(StatusCodes.Status500InternalServerError);
     }
@@ -183,24 +181,19 @@ public class BlogsController : ControllerBase
         {
             var blog = await _unitOfWork.BlogRepository
                 .GetOneAsync(b => b.Id == id, default!, default!);
-            if (blog == null)
-            {
-                return BadRequest(
-                    "Blog deosn't exist or already been deleted."
-                    );
-            }
+            if (blog is null)
+                return BadRequest("Blog deosn't exist or already been deleted.");
             var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
             if (blog.UserId != userId)
-            {
                 return Unauthorized();
-            }
             await _unitOfWork.BlogRepository.RemoveAsync(blog);
             await _unitOfWork.SaveAsync();
             return NoContent();
         }
         catch (Exception ex)
         {
-            // ModelState.AddModelError("DeleteBlog", ex.Message);
+            _logger.LogError("Deleting a blog to database: ", ex.Message);
+
         }
         return StatusCode(StatusCodes.Status500InternalServerError);
     }
@@ -225,7 +218,7 @@ public class BlogsController : ControllerBase
         }
         catch (Exception ex)
         {
-            // ModelState.AddModelError("DeleteBlog", ex.Message);
+            _logger.LogError("{Error} Executing {Action} .", ex.Message, nameof(GetFollowedBlogs));
         }
         return StatusCode(StatusCodes.Status500InternalServerError);
     }
@@ -251,7 +244,7 @@ public class BlogsController : ControllerBase
         }
         catch (Exception ex)
         {
-            // ModelState.AddModelError("DeleteBlog", ex.Message);
+            _logger.LogError("{Error} Executing {Action} .", ex.Message, nameof(GetBlogFollowers));
         }
         return StatusCode(StatusCodes.Status500InternalServerError);
     }
@@ -273,7 +266,6 @@ public class BlogsController : ControllerBase
         {
             var blog = await _unitOfWork.BlogRepository
                 .GetOneAsync(b => b.Id == id, default!, default!) ?? throw new BlogNotFoundException(id);
-
             var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
 
             if (blog.UserId == userId)
@@ -290,7 +282,12 @@ public class BlogsController : ControllerBase
         catch (Exception ex)
         {
             ModelState.AddModelError("FollowBlog", ex.Message);
+            _logger.LogError(
+                "{Error} Executing {Action} with parameters {Parameters}.",
+                    ex.Message, nameof(Follow), id
+                );
         }
+
         return ModelState.ErrorCount > 0 ?
             BadRequest(ModelState) : StatusCode(StatusCodes.Status500InternalServerError);
     }
@@ -314,7 +311,6 @@ public class BlogsController : ControllerBase
                     includeProperties: null,
                     tracked: true
                 ) ?? throw new BlogNotFoundException(id);
-
             var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
             await _unitOfWork.BlogRepository.RemoveFollowerAsync(blog.Id, userId);
             await _unitOfWork.SaveAsync();
@@ -323,9 +319,12 @@ public class BlogsController : ControllerBase
         catch (Exception ex)
         {
             ModelState.AddModelError("UnfollowdBlog", ex.Message);
+            _logger.LogError(
+                "{Error} Executing {Action} with parameters {Parameters}.",
+                    ex.Message, nameof(UnFollow), id
+                );
         }
         return ModelState.ErrorCount > 0 ?
             BadRequest(ModelState) : StatusCode(StatusCodes.Status500InternalServerError);
     }
-
 }
