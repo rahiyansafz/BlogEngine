@@ -20,6 +20,8 @@ using Services.Extensions;
 using Services.Helpers;
 using Services.Storage;
 
+using ISession = Services.Authentication.Session;
+
 var Builder = WebApplication.CreateBuilder(args);
 
 Builder.Services.AddDbContext<AppDbContext>(options =>
@@ -41,6 +43,7 @@ Builder.Services.AddScoped<IStorageService, StorageService>();
 Builder.Services.Configure<JWTOptions>(Builder.Configuration.GetSection("JWT"));
 Builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 Builder.Services.AddHttpContextAccessor();
+Builder.Services.AddScoped<ISession, Session>();
 
 Builder.Services.AddControllers();
 Builder.Services.AddScoped<SuspenededActionFilter>();

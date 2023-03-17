@@ -17,6 +17,8 @@ using Models.QueryParameters;
 using Services.Exceptions.Blogs;
 using Services.Extensions;
 
+using ISession = Services.Authentication.Session;
+
 namespace API.Controllers;
 [Authorize]
 [ApiController]
@@ -27,12 +29,19 @@ public class BlogsController : ControllerBase
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly ILogger<BlogsController> _logger;
+    private readonly ISession _session;
 
-    public BlogsController(IUnitOfWork unitOfWork, IMapper mapper, ILogger<BlogsController> logger)
+    public BlogsController(
+                IUnitOfWork unitOfWork,
+                IMapper mapper,
+                ILogger<BlogsController> logger,
+                ISession session
+                )
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _logger = logger;
+        _session = session;
     }
 
     /// <summary>
@@ -108,7 +117,7 @@ public class BlogsController : ControllerBase
         {
             if (ModelState.IsValid)
             {
-                string? userId = User.Claims.FirstOrDefault(x => x.Type == "uid")?.Value;
+                string? userId = _session.UserId;
                 var blog = _mapper.Map<Blog>(blogModel);
                 blog.UserId = userId;
                 await _unitOfWork.BlogRepository.AddAsync(blog);
@@ -145,7 +154,7 @@ public class BlogsController : ControllerBase
                 if (blog is null)
                     return BadRequest(ModelState);
 
-                var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
+                var userId = _session.UserId;
                 if (blog.UserId != userId)
                     return Unauthorized();
 
@@ -183,7 +192,7 @@ public class BlogsController : ControllerBase
                 .GetOneAsync(b => b.Id == id, default!, default!);
             if (blog is null)
                 return BadRequest("Blog deosn't exist or already been deleted.");
-            var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
+            var userId = _session.UserId;
             if (blog.UserId != userId)
                 return Unauthorized();
             await _unitOfWork.BlogRepository.RemoveAsync(blog);
@@ -209,7 +218,7 @@ public class BlogsController : ControllerBase
     {
         try
         {
-            var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
+            var userId = _session.UserId;
             var blogs = await _unitOfWork.BlogRepository.GetFollowedBlogsAsync(userId);
 
             return Ok(
@@ -266,7 +275,7 @@ public class BlogsController : ControllerBase
         {
             var blog = await _unitOfWork.BlogRepository
                 .GetOneAsync(b => b.Id == id, default!, default!) ?? throw new BlogNotFoundException(id);
-            var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
+            var userId = _session.UserId;
 
             if (blog.UserId == userId)
             {
@@ -311,7 +320,7 @@ public class BlogsController : ControllerBase
                     includeProperties: null,
                     tracked: true
                 ) ?? throw new BlogNotFoundException(id);
-            var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
+            var userId = _session.UserId;
             await _unitOfWork.BlogRepository.RemoveFollowerAsync(blog.Id, userId);
             await _unitOfWork.SaveAsync();
             return Ok();

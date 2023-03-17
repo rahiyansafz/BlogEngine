@@ -22,8 +22,8 @@ public class PostRepository : Repository<Post>, IPostRepository
         IQueryable<Post> query = dbSet.AsQueryable();
         if (postParameters.BlogId != null)
             query.Where(x => x.BlogId.Equals(postParameters.BlogId));
-        if (postParameters.UsreId != null)
-            query.Where(x => x.UserId.Equals(postParameters.UsreId));
+        if (postParameters.UserId != null)
+            query.Where(x => x.UserId.Equals(postParameters.UserId));
         if (!string.IsNullOrEmpty(postParameters.Tag))
         {
             var tag = GetTagByName(postParameters.Tag);
@@ -46,7 +46,7 @@ public class PostRepository : Repository<Post>, IPostRepository
 
         foreach (var post in posts)
         {
-            post.IsLiked = await IsLikedAsync(post.Id, postParameters.UsreId);
+            post.IsLiked = await IsLikedAsync(post.Id, postParameters.UserId);
             post.LikesCount = await GetLikesCountAsync(post.Id);
         }
 

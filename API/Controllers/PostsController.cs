@@ -15,6 +15,8 @@ using Models.QueryParameters;
 using Services.Exceptions.Blogs;
 using Services.Extensions;
 
+using ISession = Services.Authentication.Session;
+
 namespace API.Controllers;
 [Authorize]
 [ApiController]
@@ -24,12 +26,14 @@ public class PostsController : ControllerBase
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly ILogger _logger;
+    private readonly ISession _session;
 
-    public PostsController(IUnitOfWork unitOfWork, IMapper mapper, ILogger logger)
+    public PostsController(IUnitOfWork unitOfWork, IMapper mapper, ILogger logger, ISession session)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _logger = logger;
+        _session = session;
     }
 
     /// <summary>
@@ -47,8 +51,8 @@ public class PostsController : ControllerBase
     {
         try
         {
-            var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
-            postParameters.UsreId = userId;
+            var userId = _session.UserId;
+            postParameters.UserId = userId;
 
             var posts = await _unitOfWork.PostRepository
                 .GetPostsAsync(postParameters);
@@ -89,7 +93,7 @@ public class PostsController : ControllerBase
     {
         try
         {
-            var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
+            var userId = _session.UserId;
             var post = await _unitOfWork.PostRepository.GetOneAsync(postId, userId);
             return post switch
             {
@@ -128,7 +132,7 @@ public class PostsController : ControllerBase
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
+            var userId = _session.UserId;
             var blog = await _unitOfWork.BlogRepository
                 .GetOneAsync(b => b.Id == postModel.BlogId, tracked: true) ?? throw new BlogNotFoundException(postModel.BlogId);
 
@@ -179,7 +183,7 @@ public class PostsController : ControllerBase
             if (post is null)
                 return BadRequest("Post doen't exist in database");
 
-            var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
+            var userId = _session.UserId;
             if (post.UserId != userId)
                 return Unauthorized();
             post.HeadLine = postModel.HeadLine;
@@ -218,7 +222,7 @@ public class PostsController : ControllerBase
                 .GetOneAsync(p => p.Id == postId, default!, default!);
             if (post is null)
                 return BadRequest(ModelState);
-            var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
+            var userId = _session.UserId;
             if (post.UserId != userId)
                 return Unauthorized();
             await _unitOfWork.PostRepository.RemoveAsync(post);
@@ -252,7 +256,7 @@ public class PostsController : ControllerBase
             var Post = await _unitOfWork.PostRepository
                 .GetOneAsync(c => c.Id == postId, default!, default!);
             if (Post is null) return BadRequest();
-            var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
+            var userId = _session.UserId;
             await _unitOfWork.PostRepository.AddLikeAsync(Post.Id, userId);
             await _unitOfWork.SaveAsync();
 
@@ -287,7 +291,7 @@ public class PostsController : ControllerBase
             var Post = await _unitOfWork.PostRepository
                 .GetOneAsync(c => c.Id == postId, default!, default!);
             if (Post is null) return BadRequest("Post doesn't Exits.");
-            var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
+            var userId = _session.UserId;
             await _unitOfWork.PostRepository.RemoveLikeAsync(Post.Id, userId);
             await _unitOfWork.SaveAsync();
 
@@ -337,7 +341,7 @@ public class PostsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetComments(int postId)
     {
-        var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
+        var userId = _session.UserId;
         var comments = await _unitOfWork.CommentRepository
             .GetAllCommentstAsync(postId, userId);
         var commentResponse = _mapper.Map<List<CommentResponse>>(comments);
@@ -369,7 +373,7 @@ public class PostsController : ControllerBase
             if (Post == null)
                 return BadRequest();
 
-            var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
+            var userId = _session.UserId;
             if (post.UserId != userId)
                 return Unauthorized();
 
@@ -423,7 +427,7 @@ public class PostsController : ControllerBase
             if (Post == null)
                 return BadRequest();
 
-            var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
+            var userId = _session.UserId;
             if (post.UserId != userId)
                 return Unauthorized(
                     "This post doenst belong to you."

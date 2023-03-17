@@ -12,6 +12,8 @@ using Microsoft.AspNetCore.Mvc;
 using Models.ApiModels.RequestDTO;
 using Models.Entities;
 
+using ISession = Services.Authentication.Session;
+
 namespace API.Controllers;
 [Authorize]
 [ApiController]
@@ -22,12 +24,14 @@ public class CommentsController : ControllerBase
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly ILogger<CommentsController> _logger;
+    private readonly ISession _session;
 
-    public CommentsController(IUnitOfWork unitOfWork, IMapper mapper, ILogger<CommentsController> logger)
+    public CommentsController(IUnitOfWork unitOfWork, IMapper mapper, ILogger<CommentsController> logger, ISession session)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _logger = logger;
+        _session = session;
     }
 
 
@@ -46,7 +50,7 @@ public class CommentsController : ControllerBase
         {
             if (ModelState.IsValid)
             {
-                var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
+                var userId = _session.UserId;
                 var post = await _unitOfWork.PostRepository
                     .GetOneAsync(p => p.Id == comment.PostId, default!, default!);
                 if (post == null)
@@ -104,7 +108,7 @@ public class CommentsController : ControllerBase
             {
                 var comment = await _unitOfWork.CommentRepository
                     .GetOneAsync(c => c.Id == commentId, default!, default!);
-                var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
+                var userId = _session.UserId;
                 if (comment.UserId != userId)
                 {
                     return Unauthorized();
@@ -151,7 +155,7 @@ public class CommentsController : ControllerBase
             {
                 return BadRequest("Comment Doesn't Exist or already deleted.");
             }
-            var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
+            var userId = _session.UserId;
             if (comment.UserId != userId)
             {
                 return Unauthorized();
@@ -191,7 +195,7 @@ public class CommentsController : ControllerBase
                 .GetOneAsync(c => c.Id == commentId, default!, default!);
             if (comment == null)
                 return BadRequest("Comment not found.");
-            var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
+            var userId = _session.UserId;
             await _unitOfWork.CommentRepository.AddLikeAsync(commentId, userId);
             await _unitOfWork.SaveAsync();
 
@@ -226,7 +230,7 @@ public class CommentsController : ControllerBase
                 .GetOneAsync(c => c.Id == commentId, default!, default!);
             if (comment == null)
                 return BadRequest("Like doesn't exist Or already deleted.");
-            var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
+            var userId = _session.UserId;
             await _unitOfWork.CommentRepository.RemoveLikeAsync(commentId, userId);
             await _unitOfWork.SaveAsync();
 
