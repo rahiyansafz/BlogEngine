@@ -16,7 +16,7 @@ public class StorageService : IStorageService
     public string UploadProfileImage(IFormFile ImageFile, string username)
     {
         var imagePath = Path.Combine(ProfileRootPath, username);
-        using (var stream = File.Create(imagePath))
+        using (FileStream stream = File.Create(imagePath))
         {
             ImageFile.CopyTo(stream);
         }

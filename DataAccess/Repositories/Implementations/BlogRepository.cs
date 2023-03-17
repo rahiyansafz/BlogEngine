@@ -13,30 +13,20 @@ internal class BlogRepository : Repository<Blog>, IBlogRepository
     private readonly AppDbContext _appContext;
 
     public BlogRepository(AppDbContext appContext) : base(appContext)
-    {
-        _appContext = appContext;
-    }
-
+     => _appContext = appContext;
     public Task<PagedList<Blog>> GetBlogsAsync(BlogParameters blogParameters)
     {
-        IQueryable<Blog> query = dbSet.AsQueryable();
+        IQueryable<Blog> query = _dbSet.AsQueryable();
         if (!string.IsNullOrEmpty(blogParameters.Username))
-        {
             query.Where(x => x.User.UserName == blogParameters.Username);
-        }
         if (blogParameters.Popular)
-        {
             query.OrderByDescending(x => x.FollowersCount);
-        }
 
         return GetPageAsync(query, blogParameters.PageNumber, blogParameters.PageSize);
     }
 
     public async Task<Blog> GetOneByIdAsync(int BlogId)
-    {
-        return await dbSet.Where(b => b.Id == BlogId).FirstOrDefaultAsync();
-    }
-
+     => await _dbSet.Where(b => b.Id == BlogId).FirstOrDefaultAsync();
 
     public async Task<List<Blog>> GetFollowedBlogsAsync(string userId)
     {
@@ -51,11 +41,7 @@ internal class BlogRepository : Repository<Blog>, IBlogRepository
     }
 
     public async Task<List<Blog>> GetBlogsByUserIdAsync(string userId)
-    {
-        return await _appContext.Blogs
-            .Where(b => b.UserId.Equals(userId))
-            .ToListAsync();
-    }
+    => await _appContext.Blogs.Where(b => b.UserId.Equals(userId)).ToListAsync();
 
     public async Task<List<AppUser>> GetFollowers(int blogid)
     {
@@ -87,7 +73,7 @@ internal class BlogRepository : Repository<Blog>, IBlogRepository
     public async Task RemoveFollowerAsync(int blogId, string userId)
     {
         var follow = _appContext.Follows.Where(b => b.UserId == userId && b.BlogId == blogId).FirstOrDefault();
-        if (follow != null)
+        if (follow is not null)
         {
             var blog = await _appContext.Blogs.Where(x => x.Id == blogId)
                 .AsTracking()
@@ -96,5 +82,4 @@ internal class BlogRepository : Repository<Blog>, IBlogRepository
             _appContext.Follows.Remove(follow);
         }
     }
-
 }

@@ -4,14 +4,12 @@ using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace API.Filters;
-
 public class AuthResponsesOperationFilter : IOperationFilter
 {
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
-
-        if (operation == null) throw new ArgumentNullException(nameof(operation));
-        if (context == null) throw new ArgumentNullException(nameof(context));
+        if (operation is null) throw new ArgumentNullException(nameof(operation));
+        if (context is null) throw new ArgumentNullException(nameof(context));
 
         var authAttributes = context?
             .MethodInfo?
@@ -21,8 +19,6 @@ public class AuthResponsesOperationFilter : IOperationFilter
             .OfType<AuthorizeAttribute>();
 
         if (authAttributes.Any())
-        {
-
             operation.Security = new List<OpenApiSecurityRequirement>
                 {
                     new OpenApiSecurityRequirement
@@ -40,7 +36,5 @@ public class AuthResponsesOperationFilter : IOperationFilter
                         }
                     }
                 };
-        }
-
     }
 }

@@ -11,9 +11,7 @@ public class AppUserRepository : Repository<AppUser>, IAppUserRepository
     private readonly AppDbContext _dbContext;
 
     public AppUserRepository(AppDbContext appContext) : base(appContext)
-    {
-        _dbContext = appContext;
-    }
+     => _dbContext = appContext;
 
     public async Task ChangeUsername(string Username, string newUsername)
     {
@@ -29,7 +27,7 @@ public class AppUserRepository : Repository<AppUser>, IAppUserRepository
         var user = await _dbContext.Users
             .AsTracking()
             .FirstOrDefaultAsync(u => u.UserName.Equals(username));
-        if (user != null)
+        if (user is not null)
         {
             user.IsSuspended = true;
             await _dbContext.SaveChangesAsync();
@@ -43,7 +41,7 @@ public class AppUserRepository : Repository<AppUser>, IAppUserRepository
         var user = await _dbContext.Users
             .AsTracking()
             .FirstOrDefaultAsync(u => u.UserName.Equals(username));
-        if (user != null)
+        if (user is not null)
         {
             user.IsSuspended = true;
             await _dbContext.SaveChangesAsync();
@@ -59,9 +57,6 @@ public class AppUserRepository : Repository<AppUser>, IAppUserRepository
     }
 
     public async Task<bool> IsSuspendedById(string userId)
-    {
-        return (await _dbContext.Users.FirstOrDefaultAsync(u => u.Id.Equals(userId)))
+    => (await _dbContext.Users.FirstOrDefaultAsync(u => u.Id.Equals(userId, StringComparison.Ordinal)))
             .IsSuspended;
-    }
-
 }

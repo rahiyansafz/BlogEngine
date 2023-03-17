@@ -5,7 +5,6 @@ namespace DataAccess.Repositories.Implementations;
 public class UnitOfWork : IUnitOfWork
 {
     private readonly AppDbContext _dbContext;
-
     public UnitOfWork(AppDbContext dbContext)
     {
         _dbContext = dbContext;

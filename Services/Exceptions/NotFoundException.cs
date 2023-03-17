@@ -8,5 +8,4 @@ public abstract class NotFoundException : CustomException
     {
         StatusCode = HttpStatusCode.NotFound;
     }
-
 }

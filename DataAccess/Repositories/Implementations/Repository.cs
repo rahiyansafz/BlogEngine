@@ -11,71 +11,59 @@ namespace DataAccess.Repositories.Implementations;
 public class Repository<T> : IRepository<T> where T : class
 {
     private readonly AppDbContext _appContext;
-    internal DbSet<T> dbSet;
+    internal DbSet<T> _dbSet;
 
     public Repository(AppDbContext appContext)
     {
         _appContext = appContext;
-        this.dbSet = _appContext.Set<T>();
+        _dbSet = _appContext.Set<T>();
     }
 
     public async Task<T> GetOneAsync(Expression<Func<T, bool>> filter, string? includeProperties = null, bool tracked = true)
     {
-        IQueryable<T> query = tracked ? dbSet.AsTracking() : dbSet.AsNoTracking();
+        IQueryable<T> query = tracked ? _dbSet.AsTracking() : _dbSet.AsNoTracking();
         query = query.Where(filter);
-        if (includeProperties != null)
-        {
+        if (includeProperties is not null)
             foreach (var item in includeProperties.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
-            {
                 query = query.Include(item);
-            }
-        }
-        return await query.FirstOrDefaultAsync();
 
+        return await query.FirstOrDefaultAsync();
     }
 
     public async Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>> filter = null, string? includeProperties = null)
     {
-        IQueryable<T> query = dbSet;
-        if (filter != null)
-        {
+        IQueryable<T> query = _dbSet;
+        if (filter is not null)
             query.Where(filter);
-        }
-        if (includeProperties != null)
-        {
+        if (includeProperties is not null)
             foreach (var item in includeProperties.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
-            {
                 query = query.Include(item);
-            }
-        }
         return await query.ToListAsync();
     }
 
     protected async Task<PagedList<T>> GetPageAsync(IQueryable<T> query, int pageNumber, int pageSize/*, string? includeProperties = null*/)
-    {
-        return await PagedList<T>.CreateAsync(query, pageNumber, pageSize);
-    }
+    => await PagedList<T>.CreateAsync(query, pageNumber, pageSize);
 
     public async Task AddAsync(T entity)
     {
-        await dbSet.AddAsync(entity);
+        await _dbSet.AddAsync(entity);
     }
 
     public Task RemoveAsync(T entity)
     {
-        dbSet.Remove(entity);
+        _dbSet.Remove(entity);
         return Task.CompletedTask;
     }
 
     public Task RemoveRangeAsync(IEnumerable<T> entities)
     {
-        dbSet.RemoveRange(entities);
+        _dbSet.RemoveRange(entities);
         return Task.CompletedTask;
     }
 
     public Task UpdateAsync(T entity)
     {
-        dbSet.Update(entity);
+        _dbSet.Update(entity);
         return Task.CompletedTask;
     }
 }

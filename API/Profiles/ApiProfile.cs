@@ -5,7 +5,6 @@ using Models.ApiModels.ResponseDTO;
 using Models.Entities;
 
 namespace API.Profiles;
-
 public class ApiProfile : Profile
 {
     public ApiProfile()
@@ -43,6 +42,5 @@ public class ApiProfile : Profile
             );
         CreateMap<AppUser, AppUserAdminResponse>()
             .IncludeBase<AppUser, AppUserResponse>();
-
     }
 }

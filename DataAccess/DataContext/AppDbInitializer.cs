@@ -15,12 +15,10 @@ public static class AppDbInitializer
         await SeedDataAsync(serviceScope);
     }
 
-
     public static async Task SeedDataAsync(IServiceScope serviceScope)
     {
         var context = serviceScope.ServiceProvider.GetService<AppDbContext>();
-        context.Database.EnsureCreated();
-
+        context?.Database.EnsureCreated();
 
         #region BlogSeed
         if (!context.Blogs.Any())
@@ -77,7 +75,6 @@ public static class AppDbInitializer
                     },
                 },
 
-
                 new Blog
                 {
                     UserId = john.Id,
@@ -102,15 +99,12 @@ public static class AppDbInitializer
                                 }
                     },
                 }
-
                 );
 
             #endregion
 
             await context.SaveChangesAsync();
-
         }
-
     }
 
     public static async Task SeedUsersAndRolesAsync(IServiceScope serviceScope)
@@ -135,7 +129,6 @@ public static class AppDbInitializer
                     LastName = "doe",
                     Email = "johndoe@gmail.com",
                     UserName = "john123",
-
                 };
 
             var user2 =
@@ -145,7 +138,6 @@ public static class AppDbInitializer
                     LastName = "doe",
                     Email = "janedoe@gmail.com",
                     UserName = "jane123",
-
                 };
 
             var Admin =
@@ -155,7 +147,6 @@ public static class AppDbInitializer
                     LastName = "ln",
                     Email = "admin@gmail.com",
                     UserName = "admin123",
-
                 };
 
             await userManager.CreateAsync(user1, "Passwd@123");
@@ -169,7 +160,6 @@ public static class AppDbInitializer
             await userManager.AddToRoleAsync(Admin, Roles.Admin);
 
             #endregion
-
         }
     }
 }

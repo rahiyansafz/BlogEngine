@@ -9,5 +9,4 @@ public class PostResponse
     public int LikesCount { get; set; }
     public DateTime DatePublished { get; set; }
     public ICollection<TagResponse> Tags { get; set; }
-
 }

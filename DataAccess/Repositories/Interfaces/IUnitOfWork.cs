@@ -6,6 +6,5 @@ public interface IUnitOfWork
     IPostRepository PostRepository { get; }
     ICommentRepository CommentRepository { get; }
     ITokenRepository TokenRepository { get; }
-
     Task SaveAsync();
 }

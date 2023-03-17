@@ -11,9 +11,7 @@ public class CommmentRepository : Repository<Comment>, ICommentRepository
     private readonly AppDbContext _appContext;
 
     public CommmentRepository(AppDbContext appContext) : base(appContext)
-    {
-        _appContext = appContext;
-    }
+     => _appContext = appContext;
 
     public async Task<IEnumerable<Comment>> GetAllCommentstAsync(int postId, string userId)
     {
@@ -34,7 +32,6 @@ public class CommmentRepository : Repository<Comment>, ICommentRepository
         return commments;
     }
 
-
     public async Task AddLikeAsync(int commentId, string userId)
     {
         await _appContext.CommentLikes.AddAsync(
@@ -48,29 +45,20 @@ public class CommmentRepository : Repository<Comment>, ICommentRepository
             .Where(like => like.UserId == userId && like.CommentId == commentId)
             .FirstOrDefaultAsync();
 
-        if (like != null)
-        {
+        if (like is not null)
             _appContext.CommentLikes.Remove(like);
-        }
     }
 
     public async Task<int> GetLikesCount(int commentId)
-    {
-        return await _appContext.CommentLikes
+     => await _appContext.CommentLikes
             .CountAsync(like =>
                 like.CommentId == commentId
             );
-    }
-
 
     public async Task<bool> IsLiked(int commentId, string userId)
-    {
-        return await _appContext
+     => await _appContext
             .CommentLikes
             .CountAsync(like =>
                 like.CommentId == commentId && like.UserId == userId
                 ) > 0;
-    }
-
-
 }

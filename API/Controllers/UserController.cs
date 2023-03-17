@@ -120,8 +120,8 @@ public class UserController : ControllerBase
                     );
 
             // delete old image 
-            _storageService.DeleteProfileImage(user.UserName);
-            var path = _storageService.UploadProfileImage(imageFile, user.UserName);
+            _storageService.DeleteProfileImage(user!.UserName!);
+            var path = _storageService.UploadProfileImage(imageFile, user!.UserName!);
             user.ProfileImagePath = path;
             await _unitOfWork.SaveAsync();
 
@@ -155,7 +155,7 @@ public class UserController : ControllerBase
                     tracked: true
                     );
 
-            _storageService.DeleteProfileImage(user.UserName);
+            _storageService.DeleteProfileImage(user!.UserName!);
             user.ProfileImagePath = null;
             await _unitOfWork.SaveAsync();
 

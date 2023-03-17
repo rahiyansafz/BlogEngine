@@ -27,7 +27,6 @@ public class AppDbContext : IdentityDbContext<AppUser>
             .WithOne(c => c.Post)
             .OnDelete(DeleteBehavior.NoAction);
 
-
         builder.Entity<CommentLike>()
             .HasOne(x => x.Comment)
             .WithMany(x => x.Likes)
@@ -60,27 +59,21 @@ public class AppDbContext : IdentityDbContext<AppUser>
         builder.Entity<Blog>().Navigation(x => x.User).AutoInclude();
         builder.Entity<Post>().Navigation(x => x.PostTags).AutoInclude();
 
-
         base.OnModelCreating(builder);
     }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) =>
         base.OnConfiguring(optionsBuilder);
-    }
 
     public DbSet<AppUser> Users { get; set; }
     public DbSet<Blog> Blogs { get; set; }
     public DbSet<Post> Posts { get; set; }
     public DbSet<Comment> Comments { get; set; }
-
     public DbSet<Follow> Follows { get; set; }
     public DbSet<PostLike> PostLikes { get; set; }
     public DbSet<CommentLike> CommentLikes { get; set; }
-
     public DbSet<Tag> Tags { get; set; }
     public DbSet<PostTag> PostTags { get; set; }
-
     public DbSet<RefreshToken> RefreshTokens { get; set; }
 
 }

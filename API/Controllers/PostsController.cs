@@ -321,7 +321,6 @@ public class PostsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Likes(int postId)
     {
-
         var Post = await _unitOfWork.PostRepository.GetOneAsync(c => c.Id == postId);
         if (Post is null) return BadRequest();
         var usersLikes = await _unitOfWork.PostRepository.GetLikesAsync(postId);

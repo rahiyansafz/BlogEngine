@@ -61,7 +61,7 @@ Builder.Logging.AddSerilog(logger);
 Builder.AddCustomIdentity();
 
 // jwt configuration
-var key = Encoding.UTF8.GetBytes(Builder.Configuration["JWT:Key"]);
+var key = Encoding.UTF8.GetBytes(Builder!.Configuration["JWT:Key"]!);
 var tokenValidationParams = new TokenValidationParameters
 {
     ValidateIssuerSigningKey = true,
@@ -108,9 +108,7 @@ Builder.Services.AddSwaggerGen(c =>
     var xmlfile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlfile);
     if (File.Exists(xmlPath))
-    {
         c.IncludeXmlComments(xmlPath);
-    }
 });
 
 var app = Builder.Build();

@@ -15,10 +15,8 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
 
-    public AuthController(IAuthService authService)
-    {
+    public AuthController(IAuthService authService) =>
         _authService = authService;
-    }
 
     /// <summary>
     /// Sign up a new user
@@ -65,7 +63,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Signout()
     {
         var userId = User.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
-        if (userId == null) return BadRequest();
+        if (userId is null) return BadRequest();
         await _authService.RevokeTokenAsync(userId);
 
         return Ok();
@@ -83,7 +81,7 @@ public class AuthController : ControllerBase
         {
             var result = await _authService.VerifyAndGenerateToken(tokenRequest);
 
-            if (result == null)
+            if (result is null)
             {
                 return BadRequest(new LoginModelResponse()
                 {
@@ -93,9 +91,7 @@ public class AuthController : ControllerBase
             }
 
             if (result.ErrorMessage.IsNullOrEmpty())
-            {
                 return Ok(result);
-            }
 
             return BadRequest(result);
         }
@@ -105,7 +101,5 @@ public class AuthController : ControllerBase
             IsAuthenticated = false,
             ErrorMessage = "Invalid payload"
         });
-
     }
-
 }

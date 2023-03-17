@@ -34,7 +34,6 @@ public class CommentsController : ControllerBase
         _session = session;
     }
 
-
     /// <summary>
     /// Add a comment to a post 
     /// </summary>
@@ -53,18 +52,13 @@ public class CommentsController : ControllerBase
                 var userId = _session.UserId;
                 var post = await _unitOfWork.PostRepository
                     .GetOneAsync(p => p.Id == comment.PostId, default!, default!);
-                if (post == null)
-                {
-                    return BadRequest(
-                         "Post doens't exist."
-                         );
-                }
+                if (post is null)
+                    return BadRequest("Post doens't exist.");
                 if (post.CommentsDisabled)
-                {
                     return BadRequest(
                          "Comments are desabled for this post."
                          );
-                }
+
                 var newComment = _mapper.Map<Comment>(comment);
                 newComment.UserId = userId;
                 post.Comments.Add(newComment);
@@ -99,7 +93,6 @@ public class CommentsController : ControllerBase
     [Consumes(MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-
     public async Task<IActionResult> Put(int commentId, [FromBody] CommentRequest ModifiedComment)
     {
         try
@@ -110,13 +103,10 @@ public class CommentsController : ControllerBase
                     .GetOneAsync(c => c.Id == commentId, default!, default!);
                 var userId = _session.UserId;
                 if (comment.UserId != userId)
-                {
                     return Unauthorized();
-                }
-                if (comment == null)
-                {
+                if (comment is null)
                     return BadRequest("Comment doesn't exist");
-                }
+
                 comment.Content = ModifiedComment.Content;
                 await _unitOfWork.CommentRepository.UpdateAsync(comment);
                 await _unitOfWork.SaveAsync();
@@ -151,15 +141,11 @@ public class CommentsController : ControllerBase
         {
             var comment = await _unitOfWork.CommentRepository
                 .GetOneAsync(c => c.Id == commentId, default!, default!);
-            if (comment == null)
-            {
+            if (comment is null)
                 return BadRequest("Comment Doesn't Exist or already deleted.");
-            }
             var userId = _session.UserId;
             if (comment.UserId != userId)
-            {
                 return Unauthorized();
-            }
             await _unitOfWork.CommentRepository.RemoveAsync(comment);
             await _unitOfWork.SaveAsync();
 
@@ -174,7 +160,6 @@ public class CommentsController : ControllerBase
                 );
         }
         return BadRequest(ModelState);
-
     }
 
     /// <summary>
@@ -193,7 +178,7 @@ public class CommentsController : ControllerBase
         {
             var comment = await _unitOfWork.CommentRepository
                 .GetOneAsync(c => c.Id == commentId, default!, default!);
-            if (comment == null)
+            if (comment is null)
                 return BadRequest("Comment not found.");
             var userId = _session.UserId;
             await _unitOfWork.CommentRepository.AddLikeAsync(commentId, userId);
@@ -228,7 +213,7 @@ public class CommentsController : ControllerBase
         {
             var comment = await _unitOfWork.CommentRepository
                 .GetOneAsync(c => c.Id == commentId, default!, default!);
-            if (comment == null)
+            if (comment is null)
                 return BadRequest("Like doesn't exist Or already deleted.");
             var userId = _session.UserId;
             await _unitOfWork.CommentRepository.RemoveLikeAsync(commentId, userId);

@@ -13,6 +13,5 @@ public class CustomException : Exception
     }
 
     public IEnumerable<string> ErrorMessages { get; protected set; }
-
     public HttpStatusCode StatusCode { get; protected set; }
 }
