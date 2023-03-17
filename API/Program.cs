@@ -49,7 +49,6 @@ Builder.Services.AddControllers();
 Builder.Services.AddScoped<SuspenededActionFilter>();
 Builder.Services.AddRouting(options => options.LowercaseUrls = true);
 
-
 // logging 
 var logger = new LoggerConfiguration()
     .ReadFrom.Configuration(Builder.Configuration)
@@ -72,9 +71,7 @@ var tokenValidationParams = new TokenValidationParameters
     ValidateLifetime = false,
     RequireExpirationTime = false,
     ClockSkew = TimeSpan.Zero,
-
 };
-
 
 Builder.Services.AddSingleton(tokenValidationParams);
 
@@ -90,7 +87,6 @@ Builder.Services.AddAuthentication(options =>
     jwt.SaveToken = true;
     jwt.TokenValidationParameters = tokenValidationParams;
 });
-
 
 // add swaggerGen 
 Builder.Services.AddSwaggerGen(c =>
@@ -116,8 +112,6 @@ Builder.Services.AddSwaggerGen(c =>
         c.IncludeXmlComments(xmlPath);
     }
 });
-
-
 
 var app = Builder.Build();
 
