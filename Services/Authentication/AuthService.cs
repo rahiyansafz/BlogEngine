@@ -72,13 +72,16 @@ public class AuthService : IAuthService
 
     public async Task<LoginModelResponse> LoginAsync(LoginModelRequest model)
     {
+
         var user = await _userManager.FindByEmailAsync(model.Email);
         if (user is null || !await _userManager.CheckPasswordAsync(user, model.Password))
+        {
             return new LoginModelResponse()
             {
                 IsAuthenticated = false,
                 ErrorMessage = "Email or Password is incorrect!"
             };
+        }
 
         return await CreateJwtToken(user);
     }
@@ -148,6 +151,7 @@ public class AuthService : IAuthService
         };
     }
 
+
     // This function is inspired by : https://github.com/mohamadlawand087/v8-refreshtokenswithJWT/blob/cc8e7f45285b1067e1c6559af65d777d450b9679/TodoApp/Controllers/AuthManagementController.cs#L202
     public async Task<LoginModelResponse> VerifyAndGenerateToken(TokenRequest tokenRequest)
     {
@@ -173,27 +177,57 @@ public class AuthService : IAuthService
             var expiryDate = UnixTimeStampToDateTime(utcExpiryDate);
 
             if (expiryDate > DateTime.UtcNow)
-                return new LoginModelResponse() { IsAuthenticated = false, ErrorMessage = "Token has not yet expired" };
+            {
+                return new LoginModelResponse()
+                {
+                    IsAuthenticated = false,
+                    ErrorMessage = "Token has not yet expired"
+                };
+            }
 
             // validation 4 - validate existence of the token
             var storedToken = await _unitOfWork.TokenRepository.GetOneAsync(x => x.Token == tokenRequest.RefreshToken);
 
-            if (storedToken == null)
-                return new LoginModelResponse() { IsAuthenticated = false, ErrorMessage = "Token does not exist" };
+            if (storedToken is null)
+            {
+                return new LoginModelResponse()
+                {
+                    IsAuthenticated = false,
+                    ErrorMessage = "Token does not exist"
+                };
+            }
 
             // Validation 6 - validate if revoked
             if (storedToken.IsRevorked)
-                return new LoginModelResponse() { IsAuthenticated = false, ErrorMessage = "Token has been revoked" };
+            {
+                return new LoginModelResponse()
+                {
+                    IsAuthenticated = false,
+                    ErrorMessage = "Token has been revoked"
+                };
+            }
 
             // Validation 7 - validate the id
             var jti = tokenInVerification.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Jti).Value;
 
             if (storedToken.JwtId != jti)
-                return new LoginModelResponse() { IsAuthenticated = false, ErrorMessage = "Token doesn't match" };
+            {
+                return new LoginModelResponse()
+                {
+                    IsAuthenticated = false,
+                    ErrorMessage = "Token doesn't match"
+                };
+            }
 
             // Validation 8 - validate stored token expiry date
             if (storedToken.ExpiryDate < DateTime.UtcNow)
-                return new LoginModelResponse() { IsAuthenticated = false, ErrorMessage = "Refresh token has expired" };
+            {
+                return new LoginModelResponse()
+                {
+                    IsAuthenticated = false,
+                    ErrorMessage = "Refresh token has expired"
+                };
+            }
 
             // update current token 
             await _unitOfWork.TokenRepository.RemoveAsync(storedToken);
@@ -210,7 +244,6 @@ public class AuthService : IAuthService
                 IsAuthenticated = false,
                 ErrorMessage = ex.Message
             };
-
         }
     }
 

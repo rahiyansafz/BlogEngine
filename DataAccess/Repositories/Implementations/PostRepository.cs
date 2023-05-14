@@ -12,16 +12,21 @@ public class PostRepository : Repository<Post>, IPostRepository
 {
     private readonly AppDbContext _appContext;
 
-    public PostRepository(AppDbContext appContext) : base(appContext)
-     => _appContext = appContext;
+    public PostRepository(AppDbContext appContext) : base(appContext) => _appContext = appContext;
 
-    public async Task<PagedList<Post>> GetPostsAsync(PostParameters postParameters)
+    public async Task<PaginatedList<Post>> GetPostsAsync(PostFilterParams postParameters)
     {
-        IQueryable<Post> query = _dbSet.AsQueryable();
+        var query = _dbSet.AsQueryable();
+
+        // filter on blog id
         if (postParameters.BlogId is not null)
             query.Where(x => x.BlogId.Equals(postParameters.BlogId));
-        if (postParameters.UserId is not null)
-            query.Where(x => x.UserId.Equals(postParameters.UserId));
+
+        // filter on user id
+        if (postParameters.UsreId is not null)
+            query.Where(x => x.UserId.Equals(postParameters.UsreId));
+
+        // get with posts with tag if provided
         if (!string.IsNullOrEmpty(postParameters.Tag))
         {
             var tag = GetTagByName(postParameters.Tag);
@@ -29,6 +34,7 @@ public class PostRepository : Repository<Post>, IPostRepository
             {
                 var postTags = _appContext.PostTags
                     .Where(x => x.TagId == tag.Id);
+
                 query.Join(postTags,
                         p => p.Id,
                         t => t.PostId,
@@ -36,48 +42,52 @@ public class PostRepository : Repository<Post>, IPostRepository
                     );
             }
         }
-        if (postParameters.MostLiked)
-            query.OrderByDescending(x => x.LikesCount);
-        var posts = await GetPageAsync(query, postParameters.PageNumber, postParameters.PageSize);
 
-        foreach (var post in posts)
+        if (postParameters.MostLiked)
         {
-            post.IsLiked = await IsLikedAsync(post.Id, postParameters.UserId);
-            post.LikesCount = await GetLikesCountAsync(post.Id);
+            query.OrderByDescending(x => x.LikesCount)
+                .ThenByDescending(x => x.DatePublished);
         }
 
-        return posts;
+        // include post owner and likes 
+        query.Include(p => p.User)
+            .Include(p => p.Likes);
+
+        // to page list 
+        return await GetPageAsync(
+            query, postParameters.PageNumber, postParameters.PageSize
+            );
     }
 
     public async Task<Post> GetOneAsync(int postId, string userId)
     {
-        var post = _appContext.Posts.Where(p => p.Id == postId).FirstOrDefault();
+        var post = _appContext.Posts
+            .Where(p => p.Id == postId)
+            .FirstOrDefault();
+
         if (post is not null)
-        {
-            post.LikesCount = await GetLikesCountAsync(post.Id);
-            post.IsLiked = await IsLikedAsync(post.Id, userId);
-        }
+            post.IsLiked = post.Likes.Any(like => like.UserId == userId);
+
         return post;
     }
 
     public async Task<bool> IsLikedAsync(int postId, string userId)
-     => await _appContext.PostLikes.AnyAsync(like => like.PostId == postId && like.UserId == userId);
+    {
+        return await _appContext.PostLikes
+            .AnyAsync(like => like.PostId.Equals(postId) && like.UserId.Equals(userId));
+    }
 
     public async Task<List<AppUser>> GetLikesAsync(int postId)
     {
-        var likes = _appContext.PostLikes.Where(like => like.PostId == postId).ToList();
+        var likes = _appContext.PostLikes.Where(like => like.PostId == postId);
         var users = from l in likes
                     join u in _appContext.Users
                     on l.UserId equals u.Id
                     select u;
 
         return await users
-            .AsQueryable()
             .ToListAsync();
     }
-
-    public async Task<int> GetLikesCountAsync(int postId)
-    => await _appContext.PostLikes.CountAsync(like => like.PostId == postId);
 
     public async Task AddLikeAsync(int postId, string userId)
     {
@@ -90,15 +100,18 @@ public class PostRepository : Repository<Post>, IPostRepository
     public async Task RemoveLikeAsync(int postId, string userId)
     {
         var like = await _appContext.PostLikes
-               .Where(like => like.UserId == userId && like.PostId == postId)
-               .FirstOrDefaultAsync();
+            .Where(like => like.PostId == postId && like.UserId == userId)
+            .SingleOrDefaultAsync();
+
         if (like is not null)
             _appContext.PostLikes.Remove(like);
     }
 
     public async Task<Tag?> GetTagByName(string tagName)
-    => await _appContext.Tags
-            .FirstOrDefaultAsync(x => x.Name.Equals(tagName));
+    {
+        return await _appContext.Tags
+            .SingleOrDefaultAsync(x => x.Name.Equals(tagName));
+    }
 
     public async Task CreateTag(string tagname)
     {
@@ -107,6 +120,8 @@ public class PostRepository : Repository<Post>, IPostRepository
     }
 
     public async Task<List<Tag>> GetAvailableTags()
-        => await _appContext.Tags
+    {
+        return await _appContext.Tags
             .ToListAsync();
+    }
 }

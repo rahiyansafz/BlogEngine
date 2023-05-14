@@ -3314,11 +3314,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\arozt\\source\\repos\\BlogEngine\\DataAccess\\DataAccess.csproj",
+      "projectUniqueName": "C:\\Users\\arozt\\Source\\Repos\\rahiyansafz\\BlogEngine\\DataAccess\\DataAccess.csproj",
       "projectName": "DataAccess",
-      "projectPath": "C:\\Users\\arozt\\source\\repos\\BlogEngine\\DataAccess\\DataAccess.csproj",
+      "projectPath": "C:\\Users\\arozt\\Source\\Repos\\rahiyansafz\\BlogEngine\\DataAccess\\DataAccess.csproj",
       "packagesPath": "C:\\Users\\arozt\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\arozt\\source\\repos\\BlogEngine\\DataAccess\\obj\\",
+      "outputPath": "C:\\Users\\arozt\\Source\\Repos\\rahiyansafz\\BlogEngine\\DataAccess\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -3339,8 +3339,8 @@
         "net7.0": {
           "targetAlias": "net7.0",
           "projectReferences": {
-            "C:\\Users\\arozt\\source\\repos\\BlogEngine\\Models\\Models.csproj": {
-              "projectPath": "C:\\Users\\arozt\\source\\repos\\BlogEngine\\Models\\Models.csproj"
+            "C:\\Users\\arozt\\Source\\Repos\\rahiyansafz\\BlogEngine\\Models\\Models.csproj": {
+              "projectPath": "C:\\Users\\arozt\\Source\\Repos\\rahiyansafz\\BlogEngine\\Models\\Models.csproj"
             }
           }
         }
@@ -3412,7 +3412,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.201\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.203\\RuntimeIdentifierGraph.json"
       }
     }
   }

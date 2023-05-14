@@ -32,11 +32,11 @@ public class BlogsController : ControllerBase
     private readonly ISession _session;
 
     public BlogsController(
-                IUnitOfWork unitOfWork,
-                IMapper mapper,
-                ILogger<BlogsController> logger,
-                ISession session
-                )
+        IUnitOfWork unitOfWork,
+        IMapper mapper,
+        ILogger<BlogsController> logger,
+        ISession session
+        )
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
@@ -53,17 +53,19 @@ public class BlogsController : ControllerBase
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Get([FromQuery] BlogParameters blogParameters)
+    public async Task<IActionResult> Get([FromQuery] BlogFilterParams blogParameters)
     {
         try
         {
             var blogs = await _unitOfWork.BlogRepository.GetBlogsAsync(blogParameters);
+
             Response.AddPaginationHeader(
                 currentPage: blogs.CurrentPage,
                 itemsPerPage: blogs.PageSize,
                 totalItems: blogs.TotalCount,
                 totalPages: blogs.TotalPages
             );
+
             return Ok(
                 _mapper.Map<List<BlogResponse>>(blogs)
                 );
@@ -89,8 +91,10 @@ public class BlogsController : ControllerBase
         try
         {
             var blog = await _unitOfWork.BlogRepository.GetOneAsync(b => b.Id == id);
+
             if (blog is null)
                 return NotFound();
+
             return Ok(
                 _mapper.Map<BlogResponse>(blog)
                 );
@@ -117,9 +121,10 @@ public class BlogsController : ControllerBase
         {
             if (ModelState.IsValid)
             {
-                string? userId = _session.UserId;
+                var userId = _session.UserId;
                 var blog = _mapper.Map<Blog>(blogModel);
                 blog.UserId = userId;
+
                 await _unitOfWork.BlogRepository.AddAsync(blog);
                 await _unitOfWork.SaveAsync();
 
@@ -151,6 +156,7 @@ public class BlogsController : ControllerBase
             {
                 var blog = await _unitOfWork.BlogRepository
                     .GetOneAsync(b => b.Id == id, default!, default!);
+
                 if (blog is null)
                     return BadRequest(ModelState);
 
@@ -191,19 +197,24 @@ public class BlogsController : ControllerBase
             var blog = await _unitOfWork.BlogRepository
                 .GetOneAsync(b => b.Id == id, default!, default!);
             if (blog is null)
-                return BadRequest("Blog deosn't exist or already been deleted.");
+                return BadRequest(
+                    "Blog deosn't exist or already been deleted."
+                    );
+
             var userId = _session.UserId;
             if (blog.UserId != userId)
                 return Unauthorized();
+
             await _unitOfWork.BlogRepository.RemoveAsync(blog);
             await _unitOfWork.SaveAsync();
+
             return NoContent();
         }
         catch (Exception ex)
         {
             _logger.LogError("Deleting a blog to database: ", ex.Message);
-
         }
+
         return StatusCode(StatusCodes.Status500InternalServerError);
     }
 
@@ -245,7 +256,8 @@ public class BlogsController : ControllerBase
     {
         try
         {
-            List<AppUser> followers = await _unitOfWork.BlogRepository.GetFollowers(blogid);
+            List<AppUser> followers = await _unitOfWork.BlogRepository
+                .GetFollowers(blogid);
 
             return Ok(
                 _mapper.Map<List<AppUserResponse>>(followers)
@@ -284,8 +296,10 @@ public class BlogsController : ControllerBase
                     "You can't follow your OWN blogs."
                     );
             }
+
             await _unitOfWork.BlogRepository.AddFollowerAsync(blog.Id, userId);
             await _unitOfWork.SaveAsync();
+
             return Ok();
         }
         catch (Exception ex)
@@ -320,9 +334,11 @@ public class BlogsController : ControllerBase
                     includeProperties: null,
                     tracked: true
                 ) ?? throw new BlogNotFoundException(id);
+
             var userId = _session.UserId;
             await _unitOfWork.BlogRepository.RemoveFollowerAsync(blog.Id, userId);
             await _unitOfWork.SaveAsync();
+
             return Ok();
         }
         catch (Exception ex)

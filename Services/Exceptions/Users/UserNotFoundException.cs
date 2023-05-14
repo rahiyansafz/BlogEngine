@@ -5,5 +5,4 @@ public class UserNotFoundException : NotFoundException
         : base($"User with username : {username} Not found!")
     {
     }
-
 }

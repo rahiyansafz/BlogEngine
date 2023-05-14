@@ -1,7 +1,7 @@
 ﻿namespace Models.QueryParameters;
-public class PostParameters : QueryStringParameters
+public class PostFilterParams : PaginationQueryParams
 {
-    public string? UserId { get; set; }
+    public string? UsreId { get; set; }
     public int? BlogId { get; set; }
     public string? Tag { get; set; }
     public bool MostLiked { get; set; } = false;

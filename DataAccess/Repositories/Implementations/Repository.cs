@@ -35,19 +35,17 @@ public class Repository<T> : IRepository<T> where T : class
         IQueryable<T> query = _dbSet;
         if (filter is not null)
             query.Where(filter);
+
         if (includeProperties is not null)
             foreach (var item in includeProperties.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
                 query = query.Include(item);
+
         return await query.ToListAsync();
     }
 
-    protected async Task<PagedList<T>> GetPageAsync(IQueryable<T> query, int pageNumber, int pageSize/*, string? includeProperties = null*/)
-    => await PagedList<T>.CreateAsync(query, pageNumber, pageSize);
+    protected async Task<PaginatedList<T>> GetPageAsync(IQueryable<T> query, int pageNumber, int pageSize/*, string? includeProperties = null*/) => await PaginatedList<T>.CreateAsync(query, pageNumber, pageSize);
 
-    public async Task AddAsync(T entity)
-    {
-        await _dbSet.AddAsync(entity);
-    }
+    public async Task AddAsync(T entity) => await _dbSet.AddAsync(entity);
 
     public Task RemoveAsync(T entity)
     {

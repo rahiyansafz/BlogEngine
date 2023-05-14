@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\arozt\\source\\repos\\BlogEngine\\Models\\Models.csproj": {}
+    "C:\\Users\\arozt\\Source\\Repos\\rahiyansafz\\BlogEngine\\Models\\Models.csproj": {}
   },
   "projects": {
-    "C:\\Users\\arozt\\source\\repos\\BlogEngine\\Models\\Models.csproj": {
+    "C:\\Users\\arozt\\Source\\Repos\\rahiyansafz\\BlogEngine\\Models\\Models.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\arozt\\source\\repos\\BlogEngine\\Models\\Models.csproj",
+        "projectUniqueName": "C:\\Users\\arozt\\Source\\Repos\\rahiyansafz\\BlogEngine\\Models\\Models.csproj",
         "projectName": "Models",
-        "projectPath": "C:\\Users\\arozt\\source\\repos\\BlogEngine\\Models\\Models.csproj",
+        "projectPath": "C:\\Users\\arozt\\Source\\Repos\\rahiyansafz\\BlogEngine\\Models\\Models.csproj",
         "packagesPath": "C:\\Users\\arozt\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\arozt\\source\\repos\\BlogEngine\\Models\\obj\\",
+        "outputPath": "C:\\Users\\arozt\\Source\\Repos\\rahiyansafz\\BlogEngine\\Models\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -69,7 +69,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.201\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.203\\RuntimeIdentifierGraph.json"
         }
       }
     }

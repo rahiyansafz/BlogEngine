@@ -1,0 +1,296 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>API</name>
+    </assembly>
+    <members>
+        <member name="M:API.Controllers.AdminController.SuspendUser(System.String)">
+            <summary>
+            Suspend a user by username
+            </summary>
+            <param name="username"></param>
+            <returns></returns>
+            <exception cref="T:Services.Exceptions.Users.UserNotFoundException"></exception>
+        </member>
+        <member name="M:API.Controllers.AdminController.UnSuspendUser(System.String)">
+            <summary>
+            Unsuspend a user by username
+            </summary>
+            <param name="username"></param>
+            <returns></returns>
+            <exception cref="T:Services.Exceptions.Users.UserNotFoundException"></exception>
+        </member>
+        <member name="M:API.Controllers.AuthController.Register(Models.ApiModels.Auth.Request.RegistrationModelRequest)">
+            <summary>
+            Sign up a new user
+            </summary>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.AuthController.Login(Models.ApiModels.Auth.Request.LoginModelRequest)">
+            <summary>
+            Authenticates the user and returns a jwt token
+            </summary>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.AuthController.Signout">
+            <summary>
+            Revokes the refresh token
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.AuthController.RefreshToken(Models.ApiModels.Auth.Request.TokenRequest)">
+            <summary>
+            refreshes the valid token
+            </summary>
+            <param name="tokenRequest"></param>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.BlogsController.Get(Models.QueryParameters.BlogFilterParams)">
+            <summary>
+             Get Paged list of blogs
+            </summary>
+            <param name="blogParameters"></param>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.BlogsController.Get(System.Int32)">
+            <summary>
+             Get Blog by id numeric
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.BlogsController.Post(Models.ApiModels.RequestDTO.BlogRequest)">
+            <summary>
+             Insert one blog in database
+            </summary>
+            <param name="blogModel"></param>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.BlogsController.Put(System.Int32,Models.ApiModels.RequestDTO.BlogRequest)">
+            <summary>
+            Update a blog 
+            </summary>
+            <param name="id"></param>
+            <param name="blogModel"></param>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.BlogsController.Delete(System.Int32)">
+            <summary>
+            Delete one blog from database
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.BlogsController.GetFollowedBlogs">
+            <summary>
+            Get all Folowed blog by current user
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.BlogsController.GetBlogFollowers(System.Int32)">
+            <summary>
+            Get all followers for a certain blog
+            </summary>
+            <param name="blogid"></param>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.BlogsController.Follow(System.Int32)">
+            <summary>
+            Follow a blog
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+            <exception cref="T:Services.Exceptions.Blogs.BlogNotFoundException"></exception>
+        </member>
+        <member name="M:API.Controllers.BlogsController.UnFollow(System.Int32)">
+            <summary>
+            Unfollow a blog
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+            <exception cref="T:Services.Exceptions.Blogs.BlogNotFoundException"></exception>
+        </member>
+        <member name="T:API.Controllers.CommentsController">
+            <summary>
+             Comments Controller
+            </summary>
+        </member>
+        <member name="M:API.Controllers.CommentsController.Post(Models.ApiModels.RequestDTO.CommentRequest)">
+            <summary>
+            Add a comment to a post 
+            </summary>
+            <param name="postId"></param>
+            <param name="comment"></param>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.CommentsController.Put(System.Int32,Models.ApiModels.RequestDTO.CommentRequest)">
+            <summary>
+            update a comment 
+            </summary>
+            <param name="postId"></param>
+            <param name="commentId"></param>
+            <param name="ModifiedComment"></param>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.CommentsController.Delete(System.Int32)">
+            <summary>
+            Delete a comment 
+            </summary>
+            <param name="postId"></param>
+            <param name="commentId"></param>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.CommentsController.LikeComment(System.Int32)">
+            <summary>
+            Like a Comment
+            </summary>
+            <param name="postId"></param>
+            <param name="commentId"></param>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.CommentsController.RemoveLike(System.Int32)">
+            <summary>
+            Remove like of a Comment
+            </summary>
+            <param name="postId"></param>
+            <param name="commentId"></param>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.PostsController.Get(Models.QueryParameters.PostFilterParams)">
+            <summary>
+            Get all posts for some blog
+            </summary>
+            <param name="blogId"></param>
+            <param name="postParameters"></param>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.PostsController.Get(System.Int32)">
+            <summary>
+            Get one post by id
+            </summary>
+            <param name="postId"></param>
+            <returns></returns>
+            <exception cref="T:Services.Exceptions.Posts.PostNotFoundException"></exception>
+        </member>
+        <member name="M:API.Controllers.PostsController.Post(Models.ApiModels.RequestDTO.PostRequest)">
+            <summary>
+            Add one post to database
+            </summary>
+            <param name="blogId"></param>
+            <param name="postModel"></param>
+            <returns></returns>
+            <exception cref="T:Services.Exceptions.Blogs.BlogNotFoundException"></exception>
+        </member>
+        <member name="M:API.Controllers.PostsController.Put(System.Int32,Models.ApiModels.RequestDTO.PostRequest)">
+            <summary>
+            Update post
+            </summary>
+            <param name="postId"></param>
+            <param name="postModel"></param>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.PostsController.Delete(System.Int32)">
+            <summary>
+            Delete post
+            </summary>
+            <param name="postId"></param>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.PostsController.LikePost(System.Int32)">
+            <summary>
+            Add like to post
+            </summary>
+            <param name="postId"></param>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.PostsController.UnLikePost(System.Int32)">
+            <summary>
+            Remove like from post
+            </summary>
+            <param name="postId"></param>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.PostsController.Likes(System.Int32)">
+            <summary>
+            Get all users' likes for a post
+            </summary>
+            <param name="postId"></param>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.PostsController.GetComments(System.Int32)">
+            <summary>
+             Get all comments for a post
+            </summary>
+            <param name="postId"></param>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.PostsController.TagPost(System.Int32,System.String)">
+            <summary>
+            Add Tag to your post
+            </summary>
+            <param name="postId"></param>
+            <param name="tagName"></param>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.PostsController.RemoveTagPost(System.Int32,System.String)">
+            <summary>
+            Remove tag from your post
+            </summary>
+            <param name="postId"></param>
+            <param name="tagName"></param>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.TagsController.Get">
+            <summary>
+            Get all available tags
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.TagsController.CreateTag(System.String)">
+            <summary>
+            Create a new tag
+            </summary>
+            <param name="tagname"></param>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.UserController.GetAllUsers(System.Boolean)">
+            <summary>
+            Get all users
+            </summary>
+            <param name="suspended"></param>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.UserController.GetUser(System.String)">
+            <summary>
+            Get user by id
+            </summary>
+            <param name="username"></param>
+            <returns></returns>
+            <exception cref="T:Services.Exceptions.Users.UserNotFoundException"></exception>
+        </member>
+        <member name="M:API.Controllers.UserController.ChangePicture(Microsoft.AspNetCore.Http.IFormFile)">
+            <summary>
+            Get user's profile image
+            </summary>
+            <param name="imageFile"></param>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.UserController.RemovePicture">
+            <summary>
+            Remove user's profile image
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:API.Controllers.UserController.ChangeUsername(System.String)">
+            <summary>
+            Change user's username
+            </summary>
+            <param name="newUsername"></param>
+            <returns></returns>
+            <exception cref="T:Services.Exceptions.Users.UsernameAlreadyExistsException"></exception>
+            <exception cref="T:Services.Exceptions.Users.NotValidUsernameException"></exception>
+        </member>
+    </members>
+</doc>

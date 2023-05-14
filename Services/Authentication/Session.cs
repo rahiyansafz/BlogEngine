@@ -13,13 +13,14 @@ public class Session : ISession
     public Session(IHttpContextAccessor httpContextAccessor)
     {
         var user = httpContextAccessor.HttpContext?.User;
-        if (user is not null)
-            IsAuthenticated = user.Identity!.IsAuthenticated;
+        IsAuthenticated = user.Identity.IsAuthenticated;
+
         if (IsAuthenticated)
         {
-            UserId = user!.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value!;
-            Username = user.Claims.Where(x => x.Type == "username").FirstOrDefault()?.Value!;
+            UserId = user.Claims.Where(x => x.Type == "uid").FirstOrDefault()?.Value;
+            Username = user.Claims.Where(x => x.Type == "username").FirstOrDefault()?.Value;
             IsAdmin = user.IsInRole(Roles.Admin);
         }
     }
+
 }

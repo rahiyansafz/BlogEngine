@@ -25,14 +25,7 @@ using ISession = Services.Authentication.Session;
 var Builder = WebApplication.CreateBuilder(args);
 
 Builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(Builder.Configuration.GetConnectionString("Default"),
-    sqlServerOptionsAction: sqlOptions =>
-    {
-        sqlOptions.EnableRetryOnFailure(
-            maxRetryCount: 5,
-            maxRetryDelay: TimeSpan.FromSeconds(30),
-            errorNumbersToAdd: null);
-    })
+    options.UseSqlServer(Builder.Configuration.GetConnectionString("Default"))
         .EnableSensitiveDataLogging(true)
     );
 
@@ -61,7 +54,7 @@ Builder.Logging.AddSerilog(logger);
 Builder.AddCustomIdentity();
 
 // jwt configuration
-var key = Encoding.UTF8.GetBytes(Builder!.Configuration["JWT:Key"]!);
+var key = Encoding.UTF8.GetBytes(Builder.Configuration["JWT:Key"]);
 var tokenValidationParams = new TokenValidationParameters
 {
     ValidateIssuerSigningKey = true,
@@ -71,6 +64,7 @@ var tokenValidationParams = new TokenValidationParameters
     ValidateLifetime = false,
     RequireExpirationTime = false,
     ClockSkew = TimeSpan.Zero,
+
 };
 
 Builder.Services.AddSingleton(tokenValidationParams);
@@ -108,7 +102,9 @@ Builder.Services.AddSwaggerGen(c =>
     var xmlfile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlfile);
     if (File.Exists(xmlPath))
+    {
         c.IncludeXmlComments(xmlPath);
+    }
 });
 
 var app = Builder.Build();
@@ -127,6 +123,10 @@ else
 
 app.UseHttpsRedirection();
 
+string imagesDirectory = Path.Combine(Directory.GetCurrentDirectory(), @"Resources/Images");
+if (!Directory.Exists(imagesDirectory))
+    Directory.CreateDirectory(imagesDirectory);
+
 app.UseStaticFiles(new StaticFileOptions()
 {
     FileProvider = new PhysicalFileProvider(
@@ -135,7 +135,6 @@ app.UseStaticFiles(new StaticFileOptions()
 });
 
 app.UseRouting();
-
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -6,30 +6,31 @@ using Microsoft.EntityFrameworkCore;
 using Models.Entities;
 
 namespace DataAccess.Repositories.Implementations;
-public class CommmentRepository : Repository<Comment>, ICommentRepository
+public class CommentRepository : Repository<Comment>, ICommentRepository
 {
     private readonly AppDbContext _appContext;
 
-    public CommmentRepository(AppDbContext appContext) : base(appContext)
-     => _appContext = appContext;
+    public CommentRepository(AppDbContext appContext) : base(appContext) => _appContext = appContext;
 
-    public async Task<IEnumerable<Comment>> GetAllCommentstAsync(int postId, string userId)
+    public async Task<IEnumerable<Comment>> GetAllCommentsAsync(int postId, string userId)
     {
-        var commments = await _appContext.Comments
+        var comments = await _appContext.Comments
             .Where(c => c.PostId == postId)
             .Include(x => x.User)
+            .Include(x => x.Likes) // todo : add pagination
+            .Select(comment => new Comment
+            {
+                Id = comment.Id,
+                Content = comment.Content,
+                PostId = comment.PostId,
+                User = comment.User,
+                Likes = comment.Likes.ToList(),
+                IsLiked = comment.Likes.Any(like => like.UserId == userId),
+                LikesCount = comment.Likes.Count()
+            })
             .ToListAsync();
 
-        foreach (var comment in commments)
-        {
-            var commentLikes = await _appContext.CommentLikes
-                .Where(like => like.CommentId == comment.Id)
-                .ToListAsync();
-            comment.IsLiked = commentLikes.Any(like => like.UserId == userId);
-            comment.LikesCount = commentLikes.Count();
-        }
-
-        return commments;
+        return comments;
     }
 
     public async Task AddLikeAsync(int commentId, string userId)
@@ -37,6 +38,7 @@ public class CommmentRepository : Repository<Comment>, ICommentRepository
         await _appContext.CommentLikes.AddAsync(
             new CommentLike { UserId = userId, CommentId = commentId }
             );
+        await _appContext.SaveChangesAsync();
     }
 
     public async Task RemoveLikeAsync(int commentId, string userId)
@@ -46,19 +48,26 @@ public class CommmentRepository : Repository<Comment>, ICommentRepository
             .FirstOrDefaultAsync();
 
         if (like is not null)
+        {
             _appContext.CommentLikes.Remove(like);
+            await _appContext.SaveChangesAsync();
+        }
     }
 
     public async Task<int> GetLikesCount(int commentId)
-     => await _appContext.CommentLikes
+    {
+        return await _appContext.CommentLikes
             .CountAsync(like =>
                 like.CommentId == commentId
             );
+    }
 
     public async Task<bool> IsLiked(int commentId, string userId)
-     => await _appContext
+    {
+        return await _appContext
             .CommentLikes
             .CountAsync(like =>
                 like.CommentId == commentId && like.UserId == userId
                 ) > 0;
+    }
 }

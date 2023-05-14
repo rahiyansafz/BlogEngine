@@ -1,5 +1,5 @@
 ﻿namespace Models.QueryParameters;
-public abstract class QueryStringParameters
+public abstract class PaginationQueryParams
 {
     const int maxPageSize = 50;
     public int PageNumber { get; set; } = 1;

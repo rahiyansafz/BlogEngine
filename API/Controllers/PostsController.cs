@@ -13,6 +13,7 @@ using Models.Entities;
 using Models.QueryParameters;
 
 using Services.Exceptions.Blogs;
+using Services.Exceptions.Posts;
 using Services.Extensions;
 
 using ISession = Services.Authentication.Session;
@@ -25,14 +26,13 @@ public class PostsController : ControllerBase
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
-    private readonly ILogger _logger;
+    private readonly ILogger<PostsController> _logger;
     private readonly ISession _session;
 
-    public PostsController(IUnitOfWork unitOfWork, IMapper mapper, ILogger logger, ISession session)
+    public PostsController(IUnitOfWork unitOfWork, IMapper mapper, ISession session)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
-        _logger = logger;
         _session = session;
     }
 
@@ -47,12 +47,12 @@ public class PostsController : ControllerBase
     [Route("/api/posts")]
     [Consumes(MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<PostResponse>))]
-    public async Task<IActionResult> Get([FromQuery] PostParameters postParameters)
+    public async Task<IActionResult> Get([FromQuery] PostFilterParams postParameters)
     {
         try
         {
             var userId = _session.UserId;
-            postParameters.UserId = userId;
+            postParameters.UsreId = userId;
 
             var posts = await _unitOfWork.PostRepository
                 .GetPostsAsync(postParameters);
@@ -95,13 +95,12 @@ public class PostsController : ControllerBase
         {
             var userId = _session.UserId;
             var post = await _unitOfWork.PostRepository.GetOneAsync(postId, userId);
-            return post switch
-            {
-                null => NotFound($"Post with id {postId} not found."),
-                _ => Ok(
+            if (post is null)
+                return NotFound($"Post with id {postId} not found.");
+
+            return Ok(
                     _mapper.Map<PostResponse>(post)
-                )
-            };
+                );
         }
         catch (Exception ex)
         {
@@ -180,12 +179,15 @@ public class PostsController : ControllerBase
 
             var post = await _unitOfWork.PostRepository
                 .GetOneAsync(p => p.Id == postId, default!, default!);
+
             if (post is null)
                 return BadRequest("Post doen't exist in database");
 
             var userId = _session.UserId;
+
             if (post.UserId != userId)
                 return Unauthorized();
+
             post.HeadLine = postModel.HeadLine;
             post.Content = postModel.Content;
 
@@ -220,11 +222,15 @@ public class PostsController : ControllerBase
         {
             var post = await _unitOfWork.PostRepository
                 .GetOneAsync(p => p.Id == postId, default!, default!);
+
             if (post is null)
                 return BadRequest(ModelState);
+
             var userId = _session.UserId;
+
             if (post.UserId != userId)
                 return Unauthorized();
+
             await _unitOfWork.PostRepository.RemoveAsync(post);
             await _unitOfWork.SaveAsync();
 
@@ -290,7 +296,7 @@ public class PostsController : ControllerBase
         {
             var Post = await _unitOfWork.PostRepository
                 .GetOneAsync(c => c.Id == postId, default!, default!);
-            if (Post is null) return BadRequest("Post doesn't Exits.");
+            if (Post == null) return BadRequest("Post doesn't Exits.");
             var userId = _session.UserId;
             await _unitOfWork.PostRepository.RemoveLikeAsync(Post.Id, userId);
             await _unitOfWork.SaveAsync();
@@ -321,8 +327,9 @@ public class PostsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Likes(int postId)
     {
+
         var Post = await _unitOfWork.PostRepository.GetOneAsync(c => c.Id == postId);
-        if (Post is null) return BadRequest();
+        if (Post == null) return BadRequest();
         var usersLikes = await _unitOfWork.PostRepository.GetLikesAsync(postId);
 
         return Ok(
@@ -342,7 +349,7 @@ public class PostsController : ControllerBase
     {
         var userId = _session.UserId;
         var comments = await _unitOfWork.CommentRepository
-            .GetAllCommentstAsync(postId, userId);
+            .GetAllCommentsAsync(postId, userId);
         var commentResponse = _mapper.Map<List<CommentResponse>>(comments);
 
         return Ok(
@@ -377,7 +384,7 @@ public class PostsController : ControllerBase
                 return Unauthorized();
 
             Tag? tag = await _unitOfWork.PostRepository.GetTagByName(tagName);
-            if (tag is null)
+            if (tag == null)
                 return BadRequest(
                     "Not valid tag name."
                     );
@@ -419,8 +426,11 @@ public class PostsController : ControllerBase
     {
         try
         {
-            if (tagName is null)
-                return BadRequest("You must Specify tagname in request query.");
+            if (tagName == null)
+                return BadRequest(
+                    "You must Specify tagname in request query."
+                    );
+
             var post = await _unitOfWork.PostRepository
                 .GetOneAsync(c => c.Id == postId, "PostTags", tracked: true);
             if (Post == null)
@@ -433,7 +443,7 @@ public class PostsController : ControllerBase
                     );
 
             Tag? tag = await _unitOfWork.PostRepository.GetTagByName(tagName);
-            if (tag is null)
+            if (tag == null)
                 return BadRequest(
                     "Not a valid tag name."
                     );

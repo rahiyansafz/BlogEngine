@@ -23,11 +23,10 @@ public class AdminController : ControllerBase
     private readonly IMapper _mapper;
     private readonly ILogger<AdminController> _logger;
 
-    public AdminController(IUnitOfWork unitOfWork, IMapper mapper, ILogger<AdminController> logger)
+    public AdminController(IUnitOfWork unitOfWork, IMapper mapper)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
-        _logger = logger;
     }
 
     /// <summary>
@@ -47,6 +46,7 @@ public class AdminController : ControllerBase
             var user = await _unitOfWork.AppUsers.SuspendByUsername(username) ?? throw new UserNotFoundException(
                     username
                     );
+
             _logger.LogInformation("User with usrname : {} is now suspended.", username);
 
             return Ok(
@@ -81,6 +81,7 @@ public class AdminController : ControllerBase
             var user = await _unitOfWork.AppUsers.UnSuspendByUsername(username) ?? throw new UserNotFoundException(
                     username
                     );
+
             _logger.LogInformation("User with usrname : {} is now unsuspended.", username);
 
             return Ok(

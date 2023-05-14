@@ -10,8 +10,7 @@ public class AppUserRepository : Repository<AppUser>, IAppUserRepository
 {
     private readonly AppDbContext _dbContext;
 
-    public AppUserRepository(AppDbContext appContext) : base(appContext)
-     => _dbContext = appContext;
+    public AppUserRepository(AppDbContext appContext) : base(appContext) => _dbContext = appContext;
 
     public async Task ChangeUsername(string Username, string newUsername)
     {
@@ -57,6 +56,8 @@ public class AppUserRepository : Repository<AppUser>, IAppUserRepository
     }
 
     public async Task<bool> IsSuspendedById(string userId)
-    => (await _dbContext.Users.FirstOrDefaultAsync(u => u.Id.Equals(userId, StringComparison.Ordinal)))
+    {
+        return (await _dbContext.Users.FirstOrDefaultAsync(u => u.Id.Equals(userId)))
             .IsSuspended;
+    }
 }
